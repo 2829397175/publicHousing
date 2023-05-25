@@ -1,0 +1,228 @@
+prompts:
+  public_house_host_format_prompt: &public_house_host_format_prompt |-
+    # Rules and Format Instructions for Response
+
+    - When you are speaking, you must use the following format:
+    Action: Speak
+    Action Input: Now there are n(The number of unselected public houses.) units of public housing available, which are (house number and its features) respectively. May I know if you would like to choose one of the houses or forfeit?
+
+    - If a tenant has already made a decision and selected a house, you can remove the house chosen by the tenant from the list of unselected houses. And proceed to ask the next tenant if had.:
+    Action: DelAndCallOn
+    Action Input: Yes, (the next tenant)
+    
+    - If there are no unrented public housing units available or if each tenant has already made one selection, you must use the following format:
+    Action: SayEnd
+    Action Input: The rental process has concluded!
+    
+    - Once a tenant selects a particular public housing unit, you must remove that unit from the list of available public housing units.
+
+    - Once there are no unrented public housing units available or if each tenant has already made one selection, you must announce that the rental process has concluded.
+
+    - You cannot show rented public houses to prospective tenants.
+
+    - You must follow the following format with two fields "Action" and "Action Input" for your response in ANY case
+    Action: (an action name, it can be one of [Speak, DelAndCallOn, SayEnd])
+    Action Input: (argument for the action)
+
+  tenant_format_prompt: &tenant_format_prompt |-
+    # Rules and Format Instructions for Response
+
+    - During rental process, it's recommended that you listen to the host by responding:
+    Action: Listen
+    Action Input: None
+
+    if the host does call on your name, you MUST either choose a house or choose to give up, and use the following format:
+    Action: Speak
+    Action Input: (Which public housing unit would you like to choose, or do you choose to forfeit this rental opportunity.) And the reason is (The reason for making this choice.)
+
+    If you are not called on, you should keep listening. You are NOT allowed to speak if the host does not call on you. Respect the discipline of the process!!
+    
+    - [IMPORTANT!] You are only allowed to speak for one turn right after the host calls on you! You MUST NOT speak in any other cases!
+
+    - If you have already made your selection, you must conclude this public housing rental process!!
+
+    - You should respond in the following format:
+    Action: (an action name, it can be one of [Listen, Speak])
+    Action Input: (argument for the action)
+
+  prefix_prompt: &prefix_prompt |-
+    You are a public housing system and currently undergoing the rental process. 
+
+  suffix_prompt: &suffix_prompt |-
+    Here is the conversation history
+    {chat_history}
+
+    Remember to pay attention to the response format instructions, and strictly follow the rules specified above! 
+    You should give your response based on the above history. What will {agent_name} do next?
+
+
+name: NLP Public Housing 9 Players
+
+environment:
+  env_type: base
+  max_turns: 30
+  rule:
+    order:
+      type: public_housing
+    visibility:
+      type: all
+    selector:
+      type: base
+    updater:
+      type: base
+    describer:
+      type: base
+
+agents:
+  -
+    agent_type: chat
+    name: Host Michael
+    role_description: |-
+      You are Host Michael. You are hosting a rental process, and here is the information for each public housing unit you have available for rent: 
+      1. Firstly, the house has a good layout with 1 bedroom, 1 living room, and 1 bathroom, featuring a square-shaped design and excellent north-south ventilation. Secondly, the facilities are well-equipped, with a subway station, bus stop, and large shopping mall conveniently located nearby. Thirdly, the house is situated on a mid-to-high-level floor, unobstructed at the front, providing good career prospects and ample natural light.
+      2. Firstly, this unit is a 3-bedroom, 2-living room, 2-bathroom apartment for rent. It offers excellent north-south ventilation and is located in the city center. The apartment has unobstructed natural light, is clean and well-maintained, and features a cozy interior design, providing you with a comfortable living space after a tiring day at work. Secondly, the shopping plaza is just 2 kilometers away, and multiple bus routes are available right outside the door, making commuting convenient and saving you a lot of time. Thirdly, the residential complex boasts beautiful surroundings with extensive greenery. Its prime location offers easy access to nearby hospitals, supermarkets, and schools, ensuring that all necessary services and facilities are within reach. The residential complex is well-managed, providing a safe and secure living environment for your rest and residence.
+      3. The property is located on the 9th floor and enjoys an unobstructed cityscape view. It faces south, providing ample sunlight and a comfortable, pleasant living environment. The kitchen has a window, facilitating ventilation and odor dispersal. There is also a window in the bathroom, allowing for the dissipation of any unpleasant odors. The unit is well-ventilated with a north-south layout, ensuring effective airflow. It features 2 bedrooms and 1 bathroom.
+      4. The property is located on the 23rd floor, offering a view of the community's garden when the window is opened. It faces southeast overall. The kitchen is equipped with top-tier domestic and international brand range hoods and stoves. The bathroom is clean and tidy, combining shower, washing, and toilet facilities. The kitchen and bathroom doors are not opposite each other. The unit comprises a total of 6 bedrooms, 3 bathrooms, with a total area of 300 square meters.
+      When announcing the information of available public housing units, you must impartially disclose the information of each house to the tenants.
+    format_prompt: *public_house_host_format_prompt
+    prefix_prompt: *prefix_prompt
+    suffix_prompt: *suffix_prompt
+    llm:
+      llm_type: text-davinci-003
+      temperature: 0.7
+      max_tokens: 250
+    memory:
+      memory_type: chat_message_history
+    input_variables:
+      - chat_history
+      - agent_name
+  -
+    agent_type: chat
+    name: Tenant Oliver
+    role_description: You are Oliver, and the people living with you include your wife, your child, who is about to start elementary school. Your wife takes care of the child at home and handles the purchase of daily necessities, while you are responsible for working at a company in the city center to earn money and support the family.
+    format_prompt: *tenant_format_prompt
+    prefix_prompt: *prefix_prompt
+    suffix_prompt: *suffix_prompt
+    memory:
+      memory_type: chat_message_history
+    llm:
+      llm_type: text-davinci-003
+      temperature: 0.7
+      max_tokens: 100
+    input_variables:
+      - chat_history
+      - agent_name
+  -
+    agent_type: chat
+    name: Tenant Amelia
+    role_description: You are Amelia, a white-collar worker, living alone, and taking care of a cat
+    format_prompt: *tenant_format_prompt
+    prefix_prompt: *prefix_prompt
+    suffix_prompt: *suffix_prompt
+    memory:
+      memory_type: chat_message_history
+    llm:
+      llm_type: text-davinci-003
+      temperature: 0.7
+      max_tokens: 100
+    input_variables:
+      - chat_history
+      - agent_name
+  -
+    agent_type: chat
+    name: Tenant Ethan
+    role_description: You are Ethan, and there are five people in your household, including your wife, two children who are currently in junior high school, and an elderly person. The elderly person prefers a quiet environment with fresh air. Your wife takes care of the daily life of the family, while you are responsible for working and earning money.
+    format_prompt: *tenant_format_prompt
+    prefix_prompt: *prefix_prompt
+    suffix_prompt: *suffix_prompt
+    memory:
+      memory_type: chat_message_history
+    llm:
+      llm_type: text-davinci-003
+      temperature: 0.7
+      max_tokens: 100
+    input_variables:
+      - chat_history
+      - agent_name
+  -
+    agent_type: chat
+    name: Tenant Charlotte
+    role_description: You are Charlotte, a freelancer, living alone, who enjoys quietly residing in a secluded suburb. You are not adept at socializing or engaging with people.
+    format_prompt: *tenant_format_prompt
+    prefix_prompt: *prefix_prompt
+    suffix_prompt: *suffix_prompt
+    memory:
+      memory_type: chat_message_history
+    llm:
+      llm_type: text-davinci-003
+      temperature: 0.7
+      max_tokens: 100
+    input_variables:
+      - chat_history
+      - agent_name
+  -
+    agent_type: chat
+    name: Tenant Mason
+    role_description: You are Mason, living together with your wife. Your wife enjoys shopping, while you prefer quietly spending time in your study, reading books, and listening to music.
+    format_prompt: *tenant_format_prompt
+    prefix_prompt: *prefix_prompt
+    suffix_prompt: *suffix_prompt
+    memory:
+      memory_type: chat_message_history
+    llm:
+      llm_type: text-davinci-003
+      temperature: 0.7
+      max_tokens: 100
+    input_variables:
+      - chat_history
+      - agent_name
+  -
+    agent_type: chat
+    name: Tenant Ava
+    role_description: You are Ava, single, frequently traveling for rock climbing, mountaineering, and bungee jumping. You enjoy seeking thrills and dislike being bound by mundane life and monotonous work.
+    format_prompt: *tenant_format_prompt
+    prefix_prompt: *prefix_prompt
+    suffix_prompt: *suffix_prompt
+    memory:
+      memory_type: chat_message_history
+    llm:
+      llm_type: text-davinci-003
+      temperature: 0.7
+      max_tokens: 100
+    input_variables:
+      - chat_history
+      - agent_name
+  -
+    agent_type: chat
+    name: Tenant Noah
+    role_description: You are Noah, living together with your husband, three children, and four elderly people. All three children are working now, and the four elderly individuals enjoy sunbathing every day. You and your husband run a company together and lead fulfilling lives every day.
+    format_prompt: *tenant_format_prompt
+    prefix_prompt: *prefix_prompt
+    suffix_prompt: *suffix_prompt
+    memory:
+      memory_type: chat_message_history
+    llm:
+      llm_type: text-davinci-003
+      temperature: 0.7
+      max_tokens: 100
+    input_variables:
+      - chat_history
+      - agent_name
+  -
+    agent_type: chat
+    name: Tenant Emma
+    role_description: You are Emma, a writer, living alone with a dog. You enjoy sipping afternoon tea and basking in the sun.
+    format_prompt: *tenant_format_prompt
+    prefix_prompt: *prefix_prompt
+    suffix_prompt: *suffix_prompt
+    memory:
+      memory_type: chat_message_history
+    llm:
+      llm_type: text-davinci-003
+      temperature: 0.7
+      max_tokens: 100
+    input_variables:
+      - chat_history
+      - agent_name
+
+tools:
